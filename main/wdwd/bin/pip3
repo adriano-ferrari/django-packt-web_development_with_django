@@ -1,4 +1,4 @@
-#!/workspace/env/wdwd/bin/python3.11
+#!/workspace/projects/courses/django-packt-web_development_with_django_master/main/wdwd/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
