@@ -8,8 +8,11 @@
     <a href="{{ MEDIA_URL }}test.txt">Test Text File</a>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <input type="file" name="file-upload">
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
     </form>
-    <button type="submit">Submit</button>
+    {% if instance %}
+        <img src="{{ instance.image_field.url }}">
+    {% endif %}
 </body>
 </html>
