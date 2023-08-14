@@ -1,25 +1,29 @@
+from io import BytesIO
+
+from PIL import Image
+from django.core.files.images import ImageFile
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.utils import timezone
 
 from .models import Book, Contributor, Publisher, Review
 from .utils import average_rating
-from .forms import SearchForm, PublisherForm, ReviewForm
+from .forms import SearchForm, PublisherForm, ReviewForm, BookMediaForm
 
 
 def index(request):
-    return render(request, "base.html")
+    return render(request, 'base.html')
 
 
 def book_search(request):
-    search_text = request.GET.get("search", "")
+    search_text = request.GET.get('search', '')
     form = SearchForm(request.GET)
     books = set()
 
-    if form.is_valid() and form.cleaned_data["search"]:
-        search = form.cleaned_data["search"]
-        search_in = form.cleaned_data.get("search_in") or "title"
-        if search_in == "title":
+    if form.is_valid() and form.cleaned_data['search']:
+        search = form.cleaned_data['search']
+        search_in = form.cleaned_data.get('search_in') or 'title'
+        if search_in == 'title':
             books = Book.objects.filter(title__icontains=search)
         else:
             fname_contributors = Contributor.objects.filter(
@@ -39,8 +43,8 @@ def book_search(request):
                     books.add(book)
 
     return render(request,
-                  "reviews/search-results.html",
-                  {"form": form, "search_text": search_text, "books": books},
+                  'reviews/search-results.html',
+                  {'form': form, 'search_text': search_text, 'books': books},
                   )
 
 
@@ -68,10 +72,10 @@ def book_detail(request, pk):
     reviews = book.review_set.all()
     if reviews:
         book_rating = average_rating([review.rating for review in reviews])
-        context = {"book": book, "book_rating": book_rating, "reviews": reviews}
+        context = {'book': book, 'book_rating': book_rating, 'reviews': reviews}
     else:
-        context = {"book": book, "book_rating": None, "reviews": None}
-    return render(request, "reviews/book_detail.html", context)
+        context = {'book': book, 'book_rating': None, 'reviews': None}
+    return render(request, 'reviews/book_detail.html', context)
 
 
 def publisher_edit(request, pk=None):
@@ -80,7 +84,7 @@ def publisher_edit(request, pk=None):
     else:
         publisher = None
 
-    if request.method == "POST":
+    if request.method == 'POST':
         form = PublisherForm(request.POST, instance=publisher)
         if form.is_valid():
             updated_publisher = form.save()
@@ -93,18 +97,18 @@ def publisher_edit(request, pk=None):
                     request, 'Publisher "{}" was updated.'.format(updated_publisher)
                 )
 
-            return redirect("publisher_edit", updated_publisher.pk)
+            return redirect('publisher_edit', updated_publisher.pk)
     else:
         form = PublisherForm(instance=publisher)
 
     return render(
         request,
-        "reviews/instance-form.html",
+        'reviews/instance-form.html',
         {
-            "method": request.method,
-            "form": form,
-            "model_type": "Publisher",
-            "instance": publisher,
+            'method': request.method,
+            'form': form,
+            'model_type': 'Publisher',
+            'instance': publisher,
         },
     )
 
@@ -117,7 +121,7 @@ def review_edit(request, book_pk, review_pk=None):
     else:
         review = None
 
-    if request.method == "POST":
+    if request.method == 'POST':
         form = ReviewForm(request.POST, instance=review)
         if form.is_valid():
             updated_review = form.save(False)
@@ -130,18 +134,51 @@ def review_edit(request, book_pk, review_pk=None):
                 messages.success(request, 'Review for "{}" updated.'.format(book))
 
             updated_review.save()
-            return redirect("book_detail", book.pk)
+            return redirect('book_detail', book.pk)
     else:
         form = ReviewForm(instance=review)
 
     return render(
         request,
-        "reviews/instance-form.html",
+        'reviews/instance-form.html',
         {
-            "form": form,
-            "instance": review,
-            "model_type": "Review",
-            "related_instance": book,
-            "related_model_type": "Book",
+            'form': form,
+            'instance': review,
+            'model_type': 'Review',
+            'related_instance': book,
+            'related_model_type': 'Book',
         },
+    )
+
+
+def book_media(request, pk):
+    book = get_object_or_404(Book, pk=pk)
+
+    if request.method == 'POST':
+        form = BookMediaForm(request.POST, request.FILES, instance=book)
+
+        if form.is_valid():
+            book = form.save(False)
+
+            cover = form.cleaned_data.get('cover')
+
+            if cover and not hasattr(cover, 'path'):
+                image = Image.open(cover)
+                image.thumbnail((300, 300))
+                image_data = BytesIO()
+                image.save(fp=image_data, format=cover.image.format)
+                image_file = ImageFile(image_data)
+                book.cover.save(cover.name, image_file)
+            book.save()
+            messages.success(
+                request, f'Book {book} was successfully updated.'
+            )
+            return redirect('book_detail', book.pk)
+    else:
+        form = BookMediaForm(instance=book)
+
+    return render(
+        request,
+        'reviews/instance-form.html',
+        {'instance': book, 'form': form, 'model_type': 'Book', 'is_file_upload': True},
     )
