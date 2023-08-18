@@ -7,8 +7,7 @@ class BookrAdmin(admin.AdminSite):
     site_header = "Bookr Administration Portal"
     site_title = "Bookr Administration Portal"
     index_title = "Bookr Administration"
-    # site_header = 'Bookr Administration'
-    # logout_template = 'admin/logout.html'
+    logout_template = 'admin/logout.html'
 
     def profile_view(self, request):
         request.current_app = self.name
