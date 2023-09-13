@@ -9,24 +9,29 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-import os.path
 from pathlib import Path
+from configurations import Configuration, values
+
+
+class Dev(Configuration):
+    # Build paths inside the project like this: BASE_DIR / 'subdir'.
+    BASE_DIR = Path(__file__).resolve().parent.parent
+
+    # Quick-start development settings - unsuitable for production
+    # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+
+    # SECURITY WARNING: keep the secret key used in production secret!
+    SECRET_KEY = "django-insecure-c!ed4dqj0ous$i*%zf&xxf*skpgkey6%$ld-pz6s^_k6w#eo7&"
+
+    # SECURITY WARNING: don't run with debug turned on in production!
+    DEBUG = values.BooleanValue(True)
+
+    ALLOWED_HOSTS = values.ListValue([])
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-t(&7_&4(^u601ve8z8$u)g&%%wn(42pid%3gm+0$qxiz6leklv'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -132,3 +137,8 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = '/media/'
+
+
+class Prod(Dev):
+    DEBUG = False
+    SECRET_KEY = values.SecretValue()
