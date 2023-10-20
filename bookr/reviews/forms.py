@@ -1,18 +1,39 @@
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django import forms
 
 from .models import Publisher, Review, Book
 
 
+class InstanceForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
+        if kwargs.get("instance"):
+            button_title = "Save"
+        else:
+            button_title = "Create"
+
+        self.helper.add_input(Submit("", button_title))
+
+
 class SearchForm(forms.Form):
-    ChoiceField = (
-        ('title', 'Title'),
-        ('contributor', 'Contributor')
+    search = forms.CharField(required=False, min_length=3)
+    search_in = forms.ChoiceField(
+        required=False, choices=(("title", "Title"), ("contributor", "Contributor"))
     )
 
     search = forms.CharField(required=False, min_length=3)
-    search_in = forms.ChoiceField(required=False,
-                                  choices=(('title', 'Title'),
-                                           ('contributor', 'Contributor')))
+    search_in = forms.ChoiceField(
+        required=False, choices=(('title', 'Title'), ('contributor', 'Contributor'))
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = "get"
+        self.helper.add_input(Submit("", "Search"))
 
 
 class PublisherForm(forms.ModelForm):
